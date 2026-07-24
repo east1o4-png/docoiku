@@ -56,6 +56,16 @@ export class HomeScene extends Phaser.Scene {
       ease: "Sine.inOut"
     });
 
+    
+    this.add.text(width/2, height*0.49, "5こ みつけると… なにか おきるよ", {
+      fontFamily: "sans-serif",
+      fontSize: Math.max(16, Math.min(23, width*0.038)),
+      fontStyle: "bold",
+      color: "#6b5a42",
+      backgroundColor: "#fffaf0c8",
+      padding: { x: 12, y: 8 }
+    }).setOrigin(0.5);
+
     btn.on("pointerdown", () => this.scene.start("IslandScene"));
   }
 }
