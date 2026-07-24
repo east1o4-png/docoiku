@@ -4,115 +4,219 @@ export class IslandScene extends Phaser.Scene {
   }
 
   create() {
-    const { width, height } = this.scale;
+    const { width } = this.scale;
 
-    // まず確実に表示するため、物理演算や複雑な演出を使わない安定版
     this.worldW = 1536;
     this.worldH = 1035;
+    this.target = new Phaser.Math.Vector2(780, 610);
+    this.moving = false;
+    this.discovered = new Set();
 
     this.cameras.main.setBounds(0, 0, this.worldW, this.worldH);
+    this.add.image(this.worldW/2, this.worldH/2, "islandBg").setDepth(0);
 
-    const bg = this.add.image(this.worldW / 2, this.worldH / 2, "islandBg");
-    bg.setDepth(0);
+    // 主人公の足元に影
+    this.shadow = this.add.ellipse(780, 681, 72, 24, 0x384d3c, 0.25).setDepth(850);
 
-    this.player = this.add.sprite(
-      this.worldW * 0.52,
-      this.worldH * 0.62,
-      "playerWalk",
-      0
-    )
-      .setScale(0.48)
+    this.player = this.add.sprite(780, 610, "playerWalk", 0)
+      .setScale(0.42)
       .setDepth(1000);
 
-    this.target = new Phaser.Math.Vector2(this.player.x, this.player.y);
-    this.moving = false;
-
     this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
+    this.cameras.main.setZoom(Phaser.Math.Clamp(width / 760, 0.78, 1.08));
 
-    // 端末幅に応じた安全なズーム
-    const zoom = Phaser.Math.Clamp(width / 760, 0.78, 1.08);
-    this.cameras.main.setZoom(zoom);
+    this.makeUI();
+    this.makeDiscoveries();
 
-    // UI
-    const home = this.add.text(18, 22, "⌂ ホーム", {
-      fontFamily: "sans-serif",
-      fontSize: 21,
-      fontStyle: "bold",
-      color: "#4d4935",
-      backgroundColor: "#fff6d9ee",
-      padding: { x: 14, y: 10 }
-    })
-      .setScrollFactor(0)
-      .setDepth(9999)
-      .setInteractive({ useHandCursor: true });
-
-    home.on("pointerdown", () => {
-      this.scene.start("HomeScene");
-    });
-
-    this.add.text(width - 18, 22, "島を タップして あるこう", {
-      fontFamily: "sans-serif",
-      fontSize: 17,
-      fontStyle: "bold",
-      color: "#5f5137",
-      backgroundColor: "#fff6d9ee",
-      padding: { x: 12, y: 10 }
-    })
-      .setOrigin(1, 0)
-      .setScrollFactor(0)
-      .setDepth(9999);
-
-    // 画面タップで主人公が移動
     this.input.on("pointerdown", (pointer, gameObjects) => {
       if (gameObjects && gameObjects.length > 0) return;
 
-      const tx = Phaser.Math.Clamp(pointer.worldX, 80, this.worldW - 80);
-      const ty = Phaser.Math.Clamp(pointer.worldY, 100, this.worldH - 70);
+      let tx = Phaser.Math.Clamp(pointer.worldX, 55, this.worldW - 55);
+      let ty = Phaser.Math.Clamp(pointer.worldY, 90, this.worldH - 55);
+
+      const safe = this.closestWalkable(tx, ty);
+      tx = safe.x;
+      ty = safe.y;
+
+      if (Phaser.Math.Distance.Between(pointer.worldX, pointer.worldY, tx, ty) > 55) {
+        this.toast("そこは あるけないよ");
+      }
 
       this.target.set(tx, ty);
       this.moving = true;
+      this.player.setFlipX(tx < this.player.x);
+      if (!this.player.anims.isPlaying) this.player.play("walk");
 
-      const dx = tx - this.player.x;
-      this.player.setFlipX(dx < 0);
+      this.tapRipple(tx, ty);
+    });
+  }
 
-      if (!this.player.anims.isPlaying) {
-        this.player.play("walk");
-      }
+  makeUI() {
+    const { width } = this.scale;
 
-      const ring = this.add.circle(tx, ty, 10, 0xffffff, 0)
-        .setStrokeStyle(4, 0xffffff, 0.8)
-        .setDepth(900);
+    const homeBg = this.add.rectangle(18, 18, 128, 48, 0xfff7df, 0.95)
+      .setOrigin(0,0).setScrollFactor(0).setDepth(10000)
+      .setStrokeStyle(2, 0xd9c9a7, 0.9)
+      .setInteractive({useHandCursor:true});
 
+    const home = this.add.text(82, 42, "⌂  ホーム", {
+      fontFamily:"sans-serif", fontSize:19, fontStyle:"bold", color:"#5b513d"
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(10001);
+
+    homeBg.on("pointerdown", () => this.scene.start("HomeScene"));
+    home.setInteractive({useHandCursor:true}).on("pointerdown", () => this.scene.start("HomeScene"));
+
+    const badgeW = 196;
+    this.add.rectangle(width - 18, 18, badgeW, 48, 0xfff7df, 0.95)
+      .setOrigin(1,0).setScrollFactor(0).setDepth(10000)
+      .setStrokeStyle(2, 0xd9c9a7, 0.9);
+
+    this.discoveryText = this.add.text(width - 30, 42, "★ きょうの発見 0/5", {
+      fontFamily:"sans-serif", fontSize:17, fontStyle:"bold", color:"#5b513d"
+    }).setOrigin(1,0.5).setScrollFactor(0).setDepth(10001);
+
+    this.toastText = this.add.text(width/2, 82, "", {
+      fontFamily:"sans-serif",
+      fontSize:20,
+      fontStyle:"bold",
+      color:"#536a5e",
+      backgroundColor:"#fffaf0ee",
+      padding:{x:16,y:10}
+    }).setOrigin(0.5,0).setScrollFactor(0).setDepth(10002).setAlpha(0);
+  }
+
+  makeDiscoveries() {
+    const spots = [
+      {x:405,y:390,r:95,key:"tree",msg:"おおきな き！"},
+      {x:1240,y:375,r:120,key:"house",msg:"おうちを みつけた！"},
+      {x:825,y:610,r:65,key:"flower",msg:"しろい おはな！"},
+      {x:1050,y:835,r:105,key:"rocks",msg:"おおきな いわ！"},
+      {x:520,y:800,r:95,key:"beach",msg:"うみが キラキラ！"}
+    ];
+
+    spots.forEach(s => {
+      const hit = this.add.circle(s.x, s.y, s.r, 0xffffff, 0.001)
+        .setInteractive({useHandCursor:true}).setDepth(40);
+
+      hit.on("pointerdown", () => {
+        if (!this.discovered.has(s.key)) {
+          this.discovered.add(s.key);
+          this.discoveryText.setText(`★ きょうの発見 ${this.discovered.size}/5`);
+          this.sparkle(s.x, s.y);
+        }
+        this.toast(s.msg);
+      });
+    });
+
+    // 蝶を2匹だけ自然に配置
+    [[900,520],[1150,600]].forEach(([x,y], idx) => {
+      const b = this.add.image(x,y,"butterfly").setScale(0.55).setDepth(700);
       this.tweens.add({
-        targets: ring,
-        radius: 42,
-        alpha: 0,
-        duration: 420,
-        onComplete: () => ring.destroy()
+        targets:b,
+        x:x + (idx===0 ? 55 : -60),
+        y:y - 25,
+        angle:{from:-7,to:7},
+        duration:1800 + idx*350,
+        yoyo:true, repeat:-1, ease:"Sine.inOut"
       });
     });
   }
 
+  isWalkable(x, y) {
+    // 水域（左下の海）を禁止
+    const waterPoly = new Phaser.Geom.Polygon([
+      0,565, 110,590, 245,625, 390,670, 535,735,
+      500,810, 420,865, 430,925, 610,995, 710,1035, 0,1035
+    ]);
+    if (Phaser.Geom.Polygon.Contains(waterPoly, x, y)) return false;
+
+    // 木・家・岩の上には入らない
+    const blocks = [
+      {x:250,y:65,w:300,h:455},
+      {x:1050,y:175,w:420,h:390},
+      {x:105,y:500,w:350,h:185},
+      {x:930,y:760,w:330,h:180},
+      {x:1320,y:590,w:205,h:160}
+    ];
+
+    for (const b of blocks) {
+      if (x>b.x && x<b.x+b.w && y>b.y && y<b.y+b.h) return false;
+    }
+    return true;
+  }
+
+  closestWalkable(x, y) {
+    if (this.isWalkable(x,y)) return {x,y};
+
+    for (let r=24; r<=240; r+=24) {
+      for (let a=0; a<Math.PI*2; a+=Math.PI/8) {
+        const nx = Phaser.Math.Clamp(x + Math.cos(a)*r, 55, this.worldW-55);
+        const ny = Phaser.Math.Clamp(y + Math.sin(a)*r, 90, this.worldH-55);
+        if (this.isWalkable(nx,ny)) return {x:nx,y:ny};
+      }
+    }
+    return {x:this.player.x,y:this.player.y};
+  }
+
   update(_, delta) {
-    if (!this.player || !this.moving) return;
+    if (!this.moving) return;
 
     const dx = this.target.x - this.player.x;
     const dy = this.target.y - this.player.y;
-    const dist = Math.hypot(dx, dy);
+    const dist = Math.hypot(dx,dy);
 
     if (dist < 7) {
-      this.player.setPosition(this.target.x, this.target.y);
+      this.player.setPosition(this.target.x,this.target.y);
       this.moving = false;
       this.player.anims.stop();
       this.player.setFrame(0);
-      return;
+    } else {
+      const speed = 215;
+      const step = Math.min(dist, speed*(delta/1000));
+      this.player.x += (dx/dist)*step;
+      this.player.y += (dy/dist)*step;
+      this.player.setDepth(1000 + this.player.y);
     }
 
-    const speed = 230;
-    const step = Math.min(dist, speed * (delta / 1000));
+    this.shadow.setPosition(this.player.x, this.player.y + 70);
+    this.shadow.setDepth(850 + this.player.y);
+  }
 
-    this.player.x += (dx / dist) * step;
-    this.player.y += (dy / dist) * step;
-    this.player.setDepth(1000 + this.player.y);
+  tapRipple(x,y) {
+    const ring = this.add.circle(x,y,10,0xffffff,0)
+      .setStrokeStyle(4,0xffffff,0.78).setDepth(9000);
+    this.tweens.add({
+      targets:ring, radius:40, alpha:0, duration:420,
+      onComplete:()=>ring.destroy()
+    });
+  }
+
+  sparkle(x,y) {
+    for (let i=0;i<9;i++) {
+      const p = this.add.image(x,y,"spark").setScale(0.25).setDepth(9100);
+      const a = (Math.PI*2*i)/9;
+      this.tweens.add({
+        targets:p,
+        x:x+Math.cos(a)*Phaser.Math.Between(45,90),
+        y:y+Math.sin(a)*Phaser.Math.Between(45,90),
+        alpha:0,
+        scale:0.05,
+        duration:500,
+        onComplete:()=>p.destroy()
+      });
+    }
+  }
+
+  toast(msg) {
+    this.toastText.setText(msg).setAlpha(1).setScale(0.94);
+    this.tweens.killTweensOf(this.toastText);
+    this.tweens.add({
+      targets:this.toastText, scale:1, duration:120,
+      onComplete:()=>{
+        this.tweens.add({
+          targets:this.toastText, alpha:0, delay:850, duration:260
+        });
+      }
+    });
   }
 }
