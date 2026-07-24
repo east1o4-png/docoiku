@@ -1,6 +1,6 @@
-import { BootScene } from "./scenes/BootScene.js?v=240";
-import { HomeScene } from "./scenes/HomeScene.js?v=240";
-import { IslandScene } from "./scenes/IslandScene.js?v=240";
+import { BootScene } from "./scenes/BootScene.js?v=300";
+import { HomeScene } from "./scenes/HomeScene.js?v=300";
+import { IslandScene } from "./scenes/IslandScene.js?v=300";
 
 const config = {
   type: Phaser.AUTO,
