@@ -1,6 +1,6 @@
-import { BootScene } from "./scenes/BootScene.js";
-import { HomeScene } from "./scenes/HomeScene.js";
-import { IslandScene } from "./scenes/IslandScene.js";
+import { BootScene } from "./scenes/BootScene.js?v=230";
+import { HomeScene } from "./scenes/HomeScene.js?v=230";
+import { IslandScene } from "./scenes/IslandScene.js?v=230";
 
 const config = {
   type: Phaser.AUTO,
@@ -16,10 +16,6 @@ const config = {
     antialias: true,
     pixelArt: false,
     roundPixels: false
-  },
-  physics: {
-    default: "arcade",
-    arcade: { debug: false }
   },
   scene: [BootScene, HomeScene, IslandScene]
 };
