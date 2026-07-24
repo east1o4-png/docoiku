@@ -1,4 +1,60 @@
 export class HomeScene extends Phaser.Scene {
- constructor(){super("HomeScene");}
- create(){const {width,height}=this.scale;this.cameras.main.setBackgroundColor("#8ed5ee");this.add.circle(width*.82,height*.16,Math.min(width,height)*.075,0xffe18d);for(let i=0;i<5;i++){const c=this.add.ellipse(width*(.08+i*.23),height*(.17+(i%2)*.055),135,50,0xffffff,.78);this.tweens.add({targets:c,x:c.x+28,duration:2600+i*300,yoyo:true,repeat:-1,ease:"Sine.inOut"});}this.add.text(width/2,height*.29,"あさひの しま",{fontFamily:"sans-serif",fontSize:Math.max(38,Math.min(66,width*.095)),fontStyle:"bold",color:"#31556a",stroke:"#fffdf6",strokeThickness:8}).setOrigin(.5);this.add.text(width/2,height*.40,"きょうは なにを みつける？",{fontFamily:"sans-serif",fontSize:Math.max(19,Math.min(30,width*.045)),color:"#46646f"}).setOrigin(.5);const b=this.add.rectangle(width/2,height*.64,Math.min(340,width*.74),90,0xf5a06f).setStrokeStyle(5,0xffffff).setInteractive();const t=this.add.text(b.x,b.y,"しまへ いく",{fontFamily:"sans-serif",fontSize:31,fontStyle:"bold",color:"#fff"}).setOrigin(.5);this.tweens.add({targets:[b,t],scaleX:1.035,scaleY:1.035,duration:750,yoyo:true,repeat:-1});b.on("pointerdown",()=>{this.cameras.main.fadeOut(260,255,255,255);this.time.delayedCall(230,()=>this.scene.start("IslandScene"));});this.scale.on("resize",()=>this.scene.restart());}
+  constructor() {
+    super("HomeScene");
+  }
+
+  create() {
+    const { width, height } = this.scale;
+
+    const bg = this.add.image(width/2, height/2, "homeBg");
+    const scale = Math.max(width/bg.width, height/bg.height);
+    bg.setScale(scale);
+
+    this.add.rectangle(width/2, height/2, width, height, 0x143a42, 0.12);
+
+    const title = this.add.text(width/2, height*0.28, "あさひの しま", {
+      fontFamily: "sans-serif",
+      fontSize: Math.max(40, Math.min(68, width*0.095)),
+      fontStyle: "bold",
+      color: "#4d3a27",
+      stroke: "#fff9e9",
+      strokeThickness: 9
+    }).setOrigin(0.5);
+
+    this.add.text(width/2, height*0.385, "きょうは なにを みつける？", {
+      fontFamily: "sans-serif",
+      fontSize: Math.max(20, Math.min(31, width*0.047)),
+      color: "#4f675f",
+      backgroundColor: "#fffaf0cc",
+      padding: { x: 14, y: 8 }
+    }).setOrigin(0.5);
+
+    const shadow = this.add.rectangle(width/2+4, height*0.66+7, Math.min(350,width*0.76), 94, 0x835332, 0.30)
+      .setRounded?.(18);
+
+    const btn = this.add.rectangle(width/2, height*0.66, Math.min(350,width*0.76), 92, 0xf2a354)
+      .setStrokeStyle(5, 0xfff8df)
+      .setInteractive({ useHandCursor:true });
+
+    const txt = this.add.text(btn.x, btn.y, "しまへ いく", {
+      fontFamily:"sans-serif",
+      fontSize:32,
+      fontStyle:"bold",
+      color:"#ffffff"
+    }).setOrigin(0.5);
+
+    this.tweens.add({
+      targets:[btn,txt],
+      scaleX:1.035, scaleY:1.035,
+      duration:760, yoyo:true, repeat:-1,
+      ease:"Sine.inOut"
+    });
+
+    btn.on("pointerdown", () => {
+      this.cameras.main.fadeOut(260,255,255,255);
+      this.time.delayedCall(220, () => this.scene.start("IslandScene"));
+    });
+
+    this.scale.on("resize", () => this.scene.restart());
+  }
 }
