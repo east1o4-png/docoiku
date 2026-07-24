@@ -44,7 +44,7 @@ export class IslandScene extends Phaser.Scene {
     this.target = new Phaser.Math.Vector2(this.player.x, this.player.y);
 
     this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
-    this.cameras.main.setZoom(Math.max(0.78, Math.min(1.18, width / 760)));
+    this.cameras.main.setZoom(Math.max(0.78, Math.min(1.18, this.scale.width / 760)));
   }
 
   makeHotspots() {
