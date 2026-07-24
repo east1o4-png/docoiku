@@ -4,9 +4,9 @@ export class BootScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.image("homeBg", "./assets/images/home_bg.jpg?v=230");
-    this.load.image("islandBg", "./assets/images/island_bg.jpg?v=230");
-    this.load.spritesheet("playerWalk", "./assets/images/player_walk.png?v=230", {
+    this.load.image("homeBg", "./assets/images/home_bg.jpg?v=240");
+    this.load.image("islandBg", "./assets/images/island_bg.jpg?v=240");
+    this.load.spritesheet("playerWalk", "./assets/images/player_walk.png?v=240", {
       frameWidth: 190,
       frameHeight: 310
     });

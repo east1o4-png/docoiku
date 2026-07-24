@@ -16,10 +16,10 @@ export class IslandScene extends Phaser.Scene {
     this.add.image(this.worldW/2, this.worldH/2, "islandBg").setDepth(0);
 
     // 主人公の足元に影
-    this.shadow = this.add.ellipse(780, 681, 72, 24, 0x384d3c, 0.25).setDepth(850);
+    this.shadow = this.add.ellipse(780, 681, 60, 18, 0x33463a, 0.22).setDepth(850);
 
     this.player = this.add.sprite(780, 610, "playerWalk", 0)
-      .setScale(0.42)
+      .setScale(0.39)
       .setDepth(1000);
 
     this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
@@ -125,18 +125,18 @@ export class IslandScene extends Phaser.Scene {
   isWalkable(x, y) {
     // 水域（左下の海）を禁止
     const waterPoly = new Phaser.Geom.Polygon([
-      0,565, 110,590, 245,625, 390,670, 535,735,
-      500,810, 420,865, 430,925, 610,995, 710,1035, 0,1035
+      0,540, 120,570, 255,610, 410,655, 565,720,
+      590,770, 555,815, 520,855, 530,910, 660,975, 760,1035, 0,1035
     ]);
     if (Phaser.Geom.Polygon.Contains(waterPoly, x, y)) return false;
 
     // 木・家・岩の上には入らない
     const blocks = [
-      {x:250,y:65,w:300,h:455},
-      {x:1050,y:175,w:420,h:390},
-      {x:105,y:500,w:350,h:185},
-      {x:930,y:760,w:330,h:180},
-      {x:1320,y:590,w:205,h:160}
+      {x:215,y:70,w:360,h:470},
+      {x:1080,y:170,w:380,h:420},
+      {x:70,y:500,w:390,h:210},
+      {x:925,y:745,w:360,h:205},
+      {x:1300,y:570,w:220,h:190}
     ];
 
     for (const b of blocks) {
@@ -148,7 +148,7 @@ export class IslandScene extends Phaser.Scene {
   closestWalkable(x, y) {
     if (this.isWalkable(x,y)) return {x,y};
 
-    for (let r=24; r<=240; r+=24) {
+    for (let r=36; r<=300; r+=24) {
       for (let a=0; a<Math.PI*2; a+=Math.PI/8) {
         const nx = Phaser.Math.Clamp(x + Math.cos(a)*r, 55, this.worldW-55);
         const ny = Phaser.Math.Clamp(y + Math.sin(a)*r, 90, this.worldH-55);
@@ -171,14 +171,14 @@ export class IslandScene extends Phaser.Scene {
       this.player.anims.stop();
       this.player.setFrame(0);
     } else {
-      const speed = 215;
+      const speed = 205;
       const step = Math.min(dist, speed*(delta/1000));
       this.player.x += (dx/dist)*step;
       this.player.y += (dy/dist)*step;
       this.player.setDepth(1000 + this.player.y);
     }
 
-    this.shadow.setPosition(this.player.x, this.player.y + 70);
+    this.shadow.setPosition(this.player.x, this.player.y + 58);
     this.shadow.setDepth(850 + this.player.y);
   }
 
