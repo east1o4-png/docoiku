@@ -174,49 +174,87 @@ export class IslandScene extends Phaser.Scene {
     if (this.finalEventStarted) return;
     this.finalEventStarted = true;
 
-    this.questText.setText("うみのほうから なにか きた！");
+    this.questText.setText("あれ？ うみから なにか きた！");
     this.toast("ザザーン…！");
 
+    // 主人公の移動を止めて、イベントを確実に見せる
+    this.moving = false;
+    this.player.anims.stop();
+    this.player.setFrame(0);
+
+    const cam = this.cameras.main;
+
+    // 海岸イベント地点
+    const eventX = 610;
+    const eventY = 770;
+
+    // カメラ追従を一時停止して海岸へ移動
+    cam.stopFollow();
+
+    this.time.delayedCall(250, () => {
+      cam.pan(eventX, eventY, 1100, "Sine.easeInOut", false, (camera, progress) => {
+        if (progress >= 1) {
+          this.showShellEvent(eventX, eventY);
+        }
+      });
+    });
+  }
+
+  showShellEvent(eventX, eventY) {
     // 波のきらめき
-    for (let i = 0; i < 4; i++) {
-      const wave = this.add.ellipse(500 + i * 35, 860 + i * 18, 130, 24, 0xffffff, 0.25)
-        .setDepth(200);
+    for (let i = 0; i < 5; i++) {
+      const wave = this.add.ellipse(
+        470 + i * 28,
+        860 + i * 15,
+        125,
+        22,
+        0xffffff,
+        0.28
+      ).setDepth(200);
 
       this.tweens.add({
         targets: wave,
         alpha: 0,
-        scaleX: 1.35,
+        scaleX: 1.45,
         duration: 900 + i * 120,
+        yoyo: true,
         repeat: 1,
-        yoyo: true
+        ease: "Sine.inOut",
+        onComplete: () => wave.destroy()
       });
     }
 
-    // 貝が海から砂浜へ流れてくる
-    this.shell = this.add.container(430, 930).setDepth(8500);
+    this.shell = this.add.container(420, 925).setDepth(8500);
 
-    const shellBody = this.add.ellipse(0, 0, 46, 34, 0xffd7b0, 1)
-      .setStrokeStyle(3, 0xd69269, 1);
+    const shellBody = this.add.ellipse(0, 0, 48, 36, 0xffddb8, 1)
+      .setStrokeStyle(3, 0xd28d62, 1);
 
-    const shellLine1 = this.add.line(0, 0, -12, 8, 0, -8, 0xc98763, 1)
+    const shellLine1 = this.add.line(0, 0, -12, 8, 0, -8, 0xc17b58, 1)
       .setLineWidth(3);
-    const shellLine2 = this.add.line(0, 0, 0, 10, 8, -5, 0xc98763, 1)
+
+    const shellLine2 = this.add.line(0, 0, 0, 10, 10, -6, 0xc17b58, 1)
       .setLineWidth(3);
 
     this.shell.add([shellBody, shellLine1, shellLine2]);
-    this.shell.setSize(64, 54).setInteractive({ useHandCursor: true });
+    this.shell.setSize(72, 60).setInteractive({ useHandCursor: true });
 
     this.tweens.add({
       targets: this.shell,
-      x: 610,
-      y: 770,
+      x: eventX,
+      y: eventY,
       angle: 18,
       duration: 1800,
       ease: "Sine.out",
       onComplete: () => {
+        this.sparkle(this.shell.x, this.shell.y);
+        this.toast("なにか ひかってる！");
+        this.questText.setText("ひかる かいがらを タップしてみよう");
+
         this.tweens.add({
           targets: this.shell,
-          y: 764,
+          y: eventY - 7,
+          scaleX: 1.08,
+          scaleY: 1.08,
           duration: 650,
           yoyo: true,
           repeat: -1,
@@ -243,7 +281,19 @@ export class IslandScene extends Phaser.Scene {
       yoyo: true
     });
 
-    this.time.delayedCall(700, () => this.openHiddenPath());
+    this.time.delayedCall(700, () => {
+      this.openHiddenPath();
+
+      // 秘密の道を見せたあと主人公へ戻る
+      this.time.delayedCall(1200, () => {
+        const cam = this.cameras.main;
+        cam.pan(this.player.x, this.player.y, 1000, "Sine.easeInOut", false, (camera, progress) => {
+          if (progress >= 1) {
+            cam.startFollow(this.player, true, 0.085, 0.085);
+          }
+        });
+      });
+    });
   }
 
   openHiddenPath() {
@@ -251,7 +301,7 @@ export class IslandScene extends Phaser.Scene {
     this.bridgeOpen = true;
 
     // 画面内に「秘密の道」が現れる
-    this.hiddenPath = this.add.rectangle(775, 520, 140, 20, 0xf8df9b, 0)
+    this.hiddenPath = this.add.rectangle(735, 700, 150, 22, 0xf8df9b, 0)
       .setDepth(600)
       .setAngle(-12);
 
@@ -263,7 +313,7 @@ export class IslandScene extends Phaser.Scene {
       ease: "Sine.out"
     });
 
-    const marker = this.add.text(790, 500, "✨ ひみつの みち ✨", {
+    const marker = this.add.text(760, 665, "✨ ひみつの みち ✨", {
       fontFamily: "sans-serif",
       fontSize: 24,
       fontStyle: "bold",
@@ -279,7 +329,7 @@ export class IslandScene extends Phaser.Scene {
 
     this.tweens.add({
       targets: marker,
-      y: 488,
+      y: 653,
       duration: 700,
       yoyo: true,
       repeat: -1,
