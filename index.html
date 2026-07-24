@@ -3,30 +3,19 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
-  <meta name="theme-color" content="#89cfe8" />
+  <meta name="theme-color" content="#7fcde8" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>あさひのしま</title>
   <style>
-    html, body {
-      margin: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: #89cfe8;
-      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
-      touch-action: none;
-    }
-    #game {
-      width: 100%;
-      height: 100%;
-    }
-    canvas {
-      display: block;
-      margin: 0 auto;
-    }
+    html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#7fcde8;
+      font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;touch-action:none}
+    #game{width:100%;height:100%}
+    canvas{display:block;margin:0 auto}
   </style>
 </head>
 <body>
-  <div id="game" aria-label="あさひのしま ゲーム"></div>
+  <div id="game" aria-label="あさひのしま"></div>
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
   <script type="module" src="./src/main.js"></script>
 </body>
